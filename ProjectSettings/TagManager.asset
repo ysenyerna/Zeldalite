@@ -5,6 +5,7 @@ TagManager:
   serializedVersion: 3
   tags:
   - PlayerSword
+  - Pit
   layers:
   - Default
   - TransparentFX
@@ -16,7 +17,7 @@ TagManager:
   - Player
   - Enemy
   - EnemyHitbox
-  - 
+  - Pit
   - 
   - 
   - 
@@ -42,11 +43,20 @@ TagManager:
   - name: Floor
     uniqueID: 3639469289
     locked: 0
+  - name: FloorHoles
+    uniqueID: 1812611599
+    locked: 0
   - name: Wall
     uniqueID: 2816684251
     locked: 0
   - name: Player
     uniqueID: 2490494165
+    locked: 0
+  - name: ForegroundWalls
+    uniqueID: 560711135
+    locked: 0
+  - name: Decor
+    uniqueID: 205083371
     locked: 0
   - name: Default
     uniqueID: 0

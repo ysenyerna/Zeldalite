@@ -43,7 +43,7 @@ public class Player : MonoBehaviour
 	Timer iframeTime;
 
 	// States 
-	enum State { Normal, Attacking, TakenDamage, Falling, Dying }
+	enum State { Normal, Attacking, TakenDamage, Falling, Dying, Dead }
 	private State state = State.Normal;
 
 
@@ -77,37 +77,31 @@ public class Player : MonoBehaviour
 		var vel = body.linearVelocity;
 
 		// Get animation
-		string animation;
-		if (state == State.Dying)
+		string animation = "";
+		if (state == State.Falling)
+			animation = "Fall";
+		else if (state == State.Dying)
 			animation = "Death";
 		else if (state == State.TakenDamage)
 			animation = "Hit";
 		else if (state == State.Attacking)
 			animation = "Attack";
-		else if (vel != Vector2.zero)
+		else if (state == State.Normal && vel != Vector2.zero)
 			animation = "Run";
-		else
+		else if (state == State.Normal)
 			animation = "Idle";
+
+		if (animation == "")
+			return;
 
 		// Get direction
 		string directionName = "";
-		if (animation != "Death")
+		if (animation != "Death" && animation != "Fall")
 			directionName = Direction == Vector2.up ? "Up" : Direction == Vector2.down ? "Down" : Direction == Vector2.right ? "Right" : "Left";
 
 		// Play animation
 		anim.Play(animation + directionName);
 
-	}
-
-	private void AttackPressed(InputAction.CallbackContext ctx)
-	{
-		if (state != State.Normal)
-			return; 
-
-		var rotation = Direction == Vector2.up ? 180f : Direction == Vector2.down ? 0f : Direction == Vector2.right ? 90f : 270f;
-		sword.transform.eulerAngles = new (0, 0, rotation);
-		sword.enabled = true;
-		state = State.Attacking;
 	}
 
 
@@ -126,8 +120,7 @@ public class Player : MonoBehaviour
 		}
 		else if (state == State.Normal)
 		{
-			Vector2 dir = Vector2.zero;
-			dir = input["Move"].ReadValue<Vector2>();
+			Vector2 dir = input["Move"].ReadValue<Vector2>();
 			dir = Vector2.Normalize(dir);
 			body.linearVelocity = dir * speed;
 		}
@@ -141,7 +134,6 @@ public class Player : MonoBehaviour
 	public void GotHit(int damage, Vector2 knockback = new())
 	{
 		
-
 		// Cancel attack
 		sword.enabled = false;
 		body.linearVelocity = knockback;
@@ -177,7 +169,42 @@ public class Player : MonoBehaviour
 
 	private void DeathAnimationFinished()
 	{
-		
+		state = State.Dead;
 	}
+
+	private void AttackPressed(InputAction.CallbackContext ctx)
+	{
+		if (state != State.Normal)
+			return; 
+
+		var rotation = Direction == Vector2.up ? 180f : Direction == Vector2.down ? 0f : Direction == Vector2.right ? 90f : 270f;
+		sword.transform.eulerAngles = new (0, 0, rotation);
+		sword.enabled = true;
+		state = State.Attacking;
+	}
+
+
+	private void OnTriggerEnter2D(Collider2D collider)
+	{
+		if (collider.gameObject.CompareTag("Pit"))
+		{
+			iframeTime.Stop();
+			state = State.Falling;
+		}
+	}
+
+	private void FallAnimationFinished()
+	{
+		GotHit(1);
+		if (state == State.Dying)
+			DeathAnimationFinished();
+		else
+		{
+			transform.position = new(0, 2.5f, transform.position.z);
+			state = State.Normal;
+		}
+
+	}
+
 
 }

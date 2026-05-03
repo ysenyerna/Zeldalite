@@ -87,7 +87,15 @@ public class Spider : MonoBehaviour, IEnemy
 
 	private void OnTriggerEnter2D(Collider2D collider)
 	{
+		// Handle falling in pits
+		if (collider.gameObject.CompareTag("Pit"))
+		{
+			inHitAnimation = true;
+			body.linearVelocity = Vector2.zero;
+			anim.Play("SpiderDeath");
+		}
 
+		// Handle getting hit by player sword
 		if ( inHitAnimation || !collider.gameObject.CompareTag("PlayerSword") ) 
 			return;
 
