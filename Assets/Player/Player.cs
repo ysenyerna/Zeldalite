@@ -9,6 +9,25 @@ public class Player : MonoBehaviour
 
 
 
+	private Vector2 _direction;
+	private Vector2 Direction 
+	{ 
+		get 
+		{ 
+			var vel = body.linearVelocity;
+			if (vel == Vector2.zero )
+				return _direction;
+
+			if (Mathf.Round(vel.x) != 0)
+				_direction = vel.x > 0 ? Vector2.right : Vector2.left;
+			else 
+				_direction = vel.y < 0 ? Vector2.down : Vector2.up;
+			
+			return _direction;
+		} 
+	}
+
+
 
 	private bool attacking;
 
@@ -16,15 +35,20 @@ public class Player : MonoBehaviour
 	InputActionMap input;
 	Rigidbody2D body;
 	Animator anim;
+	Camera cam;
+	BoxCollider2D sword;
 
 	private void Start()
 	{
 		// Get input
 		input = InputSystem.actions.actionMaps.First(m => m.name == "Player");
+		input["Attack"].performed += AttackPressed;
 
 		// Get components
 		body = GetComponent<Rigidbody2D>();
 		anim = GetComponent<Animator>();
+		cam = GameObject.FindWithTag("MainCamera").GetComponent<Camera>();
+		sword = GameObject.Find("Sword").GetComponent<BoxCollider2D>();
 
 	}
 
@@ -35,10 +59,9 @@ public class Player : MonoBehaviour
 	private void Update()
 	{
 		Animate();
-		HandleAttacking();
+		cam.transform.position = new Vector3 (transform.position.x, transform.position.y, cam.transform.position.z);
 	}
 
-	private string animationDirection = "Down";
 	private void Animate()
 	{
 		var vel = body.linearVelocity;
@@ -53,31 +76,24 @@ public class Player : MonoBehaviour
 			animation = "Idle";
 
 		// Get direction
-		if (vel != Vector2.zero)
-		{
-			if (vel.x != 0)
-				animationDirection = vel.x > 0 ? "Right" : "Left";
-			else 
-				animationDirection = vel.y > 0 ? "Up" : "Down";
-		}
-
+		var directionName = Direction == Vector2.up ? "Up" : Direction == Vector2.down ? "Down" : Direction == Vector2.right ? "Right" : "Left";
 
 		// Play animation
-		anim.Play(animation + animationDirection);
+		anim.Play(animation + directionName);
 
 	}
 
-	private void HandleAttacking()
+	private void AttackPressed(InputAction.CallbackContext ctx)
 	{
-		if (input["Attack"].WasPressedThisFrame())
-		{
-			attacking = true;
-		}
-		
+		var rotation = Direction == Vector2.up ? 180f : Direction == Vector2.down ? 0f : Direction == Vector2.right ? 90f : 270f;
+		sword.transform.eulerAngles = new (0, 0, rotation);
+		sword.enabled = true;
+		attacking = true;
 	}
 
 	private void AttackAnimationFinished()
 	{
+		sword.enabled = false;
 		attacking = false;
 	}
 
@@ -97,12 +113,8 @@ public class Player : MonoBehaviour
 			dir = Vector2.Normalize(dir);
 		}
 
-
-
 		body.linearVelocity = dir * speed;
 
-
-		
 	}
 
 
