@@ -1,8 +1,6 @@
-using System;
-using Unity.VisualScripting;
 using UnityEngine;
 
-public class Spider : MonoBehaviour
+public class Spider : MonoBehaviour, IEnemy
 {
 
 	[SerializeField] private int maxHp = 4;
@@ -13,10 +11,22 @@ public class Spider : MonoBehaviour
 
 	public bool Aggro { get; private set; } = false;
 
-	Player player;
+	// Enemy Interface
+	public int Damage { get; } = 1;
+	public Vector2 Position { get { return new(body.transform.position.x, body.transform.position.y); } }
+	public float Knockback { get; } = 12f;
 
+	public void HitPlayer()
+	{
+		stillTime.Run();
+	}
+
+
+	// Components
+	Player player;
 	Rigidbody2D body;
 	Animator anim;
+	Timer stillTime;
 
 	private bool inHitAnimation;
 
@@ -27,6 +37,7 @@ public class Spider : MonoBehaviour
 
 		body = GetComponent<Rigidbody2D>();
 		anim = GetComponent<Animator>();
+		stillTime = GetComponent<Timer>();
 
 		hp = maxHp;
 	}
@@ -46,7 +57,7 @@ public class Spider : MonoBehaviour
 
 	private void FixedUpdate()
 	{
-		if ( !inHitAnimation )
+		if ( !inHitAnimation && !stillTime.Running )
 		{
 			var playerPos = player.transform.position;
 			var pos = transform.position;
@@ -82,7 +93,7 @@ public class Spider : MonoBehaviour
 
 		var playerPos = player.transform.position;
 		var pos = transform.position;
-		body.linearVelocity = Vector2.Normalize(pos - playerPos) * 6f;
+		body.linearVelocity = Vector2.Normalize(pos - playerPos) * 8f;
 		hp -= 1;
 		inHitAnimation = true;
 		if (hp > 0)
