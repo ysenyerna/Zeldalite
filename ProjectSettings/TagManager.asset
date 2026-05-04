@@ -6,6 +6,8 @@ TagManager:
   tags:
   - PlayerSword
   - Pit
+  - RespawnZone
+  - EndZone
   layers:
   - Default
   - TransparentFX
@@ -40,6 +42,9 @@ TagManager:
   - 
   - 
   m_SortingLayers:
+  - name: Background
+    uniqueID: 3744039175
+    locked: 0
   - name: Floor
     uniqueID: 3639469289
     locked: 0

@@ -1,3 +1,4 @@
+using System;
 using System.Linq;
 using UnityEngine;
 using UnityEngine.InputSystem;
@@ -8,7 +9,7 @@ public class Player : MonoBehaviour
 	[SerializeField] float speed = 4f;
 
 
-	public readonly int MaxHealth = 10;
+	public readonly int MaxHealth = 5;
 	public int Health = 10;
 	public Vector2 Position { 
 		get { return new(body.transform.position.x, body.transform.position.y); } 
@@ -32,6 +33,8 @@ public class Player : MonoBehaviour
 		} 
 	}
 
+	public Action GameEnded;
+	public bool IsDead { get; private set; } = false;
 
 	// Components
 	InputActionMap input;
@@ -43,12 +46,15 @@ public class Player : MonoBehaviour
 	Timer iframeTime;
 
 	// States 
-	enum State { Normal, Attacking, TakenDamage, Falling, Dying, Dead }
+	enum State { Normal, Attacking, TakenDamage, Falling, Dying, Dead, End }
 	private State state = State.Normal;
+
+	Vector2 currentRespawnPoint = Vector2.zero;
 
 
 	private void Start()
 	{
+		Health = MaxHealth;
 		// Get input
 		input = InputSystem.actions.actionMaps.First(m => m.name == "Player");
 		input["Attack"].performed += AttackPressed;
@@ -169,6 +175,8 @@ public class Player : MonoBehaviour
 
 	private void DeathAnimationFinished()
 	{
+		IsDead = true;
+		GameEnded?.Invoke();
 		state = State.Dead;
 	}
 
@@ -191,6 +199,16 @@ public class Player : MonoBehaviour
 			iframeTime.Stop();
 			state = State.Falling;
 		}
+		else if (collider.gameObject.CompareTag("RespawnZone"))
+		{
+			var point = collider.transform.GetChild(0);
+			currentRespawnPoint = new(point.transform.position.x, point.transform.position.y);
+		}
+		else if (collider.gameObject.CompareTag("EndZone"))
+		{
+			GameEnded?.Invoke();
+			state = State.End;
+		}
 	}
 
 	private void FallAnimationFinished()
@@ -200,7 +218,7 @@ public class Player : MonoBehaviour
 			DeathAnimationFinished();
 		else
 		{
-			transform.position = new(0, 2.5f, transform.position.z);
+			transform.position = new(currentRespawnPoint.x, currentRespawnPoint.y, transform.position.z);
 			state = State.Normal;
 		}
 
